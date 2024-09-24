@@ -27,16 +27,6 @@
             margin-bottom: 15px;
             font-weight: 700;
             text-align: center;
-            opacity: 0;
-            transform: translateY(-20px);
-            animation: fadeIn 0.5s forwards 0.3s; /* Delay animation */
-        }
-
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .search {
@@ -56,11 +46,6 @@
             flex: 1;
             background-color: #1e1e1e;
             color: white;
-            transition: background-color 0.3s;
-        }
-
-        input[type="text"]:focus {
-            background-color: #272727;
         }
 
         button {
@@ -71,12 +56,6 @@
             border: none;
             border-radius: 0 5px 5px 0;
             cursor: pointer;
-            transition: background-color 0.3s;
-            font-weight: 500;
-        }
-
-        button:hover {
-            background-color: #e64a19;
         }
 
         .time-card {
@@ -109,14 +88,37 @@
             font-size: 1.5em;
             font-weight: 500;
         }
+
+        .suggestions {
+            position: absolute;
+            background: #1e1e1e;
+            color: white;
+            border-radius: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+            width: 100%;
+            max-width: 400px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .suggestion-item:hover {
+            background-color: #272727;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>PVPN Time</h1>
         <div class="search">
-            <input type="text" id="countryInput" placeholder="Enter country name (e.g., France)" />
+            <input type="text" id="countryInput" placeholder="Enter country name or state" oninput="showSuggestions(this.value)" />
             <button onclick="getTime()">Search</button>
+            <div class="suggestions" id="suggestionsList"></div>
         </div>
 
         <div class="time-card" id="timeCard">
@@ -126,7 +128,8 @@
     </div>
 
     <script>
-        const countryTimezones = {
+        // Comprehensive list of all countries and their time zones
+        const timezones = {
             "Afghanistan": "Asia/Kabul",
             "Albania": "Europe/Tirane",
             "Algeria": "Africa/Algiers",
@@ -134,70 +137,351 @@
             "Angola": "Africa/Luanda",
             "Antigua and Barbuda": "America/Antigua",
             "Argentina": "America/Argentina/Buenos_Aires",
-            "Australia": "Australia/Sydney",
+            "Armenia": "Asia/Yerevan",
+            "Australia": {
+                "Australian Capital Territory": "Australia/Sydney",
+                "New South Wales": "Australia/Sydney",
+                "Northern Territory": "Australia/Darwin",
+                "Queensland": "Australia/Brisbane",
+                "South Australia": "Australia/Adelaide",
+                "Tasmania": "Australia/Hobart",
+                "Victoria": "Australia/Melbourne",
+                "Western Australia": "Australia/Perth"
+            },
+            "Austria": "Europe/Vienna",
             "Bahamas": "America/Nassau",
             "Bahrain": "Asia/Bahrain",
             "Bangladesh": "Asia/Dhaka",
             "Belgium": "Europe/Brussels",
-            "Brazil": "America/Sao_Paulo",
+            "Belize": "America/Belize",
+            "Benin": "Africa/Porto-Novo",
+            "Bhutan": "Asia/Thimphu",
+            "Bolivia": "America/La_Paz",
+            "Bosnia and Herzegovina": "Europe/Sarajevo",
+            "Botswana": "Africa/Gaborone",
+            "Brazil": {
+                "Acre": "America/Rio_Branco",
+                "Alagoas": "America/Maceio",
+                "Amapá": "America/Belem",
+                "Amazonas": "America/Manaus",
+                "Bahia": "America/Bahia",
+                "Ceará": "America/Fortaleza",
+                "Distrito Federal": "America/Sao_Paulo",
+                "Espírito Santo": "America/Sao_Paulo",
+                "Goiás": "America/Goiania",
+                "Maranhão": "America/Sao_Luis",
+                "Mato Grosso": "America/Cuiaba",
+                "Mato Grosso do Sul": "America/Campo_Grande",
+                "Minas Gerais": "America/Sao_Paulo",
+                "Pará": "America/Belem",
+                "Paraíba": "America/Montevideo",
+                "Paraná": "America/Curitiba",
+                "Pernambuco": "America/Recife",
+                "Piauí": "America/Teresina",
+                "Rio de Janeiro": "America/Sao_Paulo",
+                "Rio Grande do Norte": "America/Fortaleza",
+                "Rio Grande do Sul": "America/Porto_Alegre",
+                "Rondônia": "America/Porto_Velho",
+                "Roraima": "America/Boa_Vista",
+                "São Paulo": "America/Sao_Paulo",
+                "Sergipe": "America/Maceio",
+                "Tocantins": "America/Palmas"
+            },
+            "Brunei": "Asia/Brunei",
             "Bulgaria": "Europe/Sofia",
-            "Canada": "America/Toronto",
+            "Burkina Faso": "Africa/Ouagadougou",
+            "Burundi": "Africa/Bujumbura",
+            "Cabo Verde": "Atlantic/Cape_Verde",
+            "Cambodia": "Asia/Phnom_Penh",
+            "Cameroon": "Africa/Douala",
+            "Canada": {
+                "Alberta": "America/Edmonton",
+                "British Columbia": "America/Vancouver",
+                "Manitoba": "America/Winnipeg",
+                "New Brunswick": "America/Moncton",
+                "Newfoundland and Labrador": "America/St_Johns",
+                "Nova Scotia": "America/Halifax",
+                "Ontario": "America/Toronto",
+                "Prince Edward Island": "America/Charlottetown",
+                "Quebec": "America/Toronto",
+                "Saskatchewan": "America/Regina",
+                "Yukon": "America/Whitehorse",
+                "Northwest Territories": "America/Yellowknife",
+                "Nunavut": "America/Iqaluit"
+            },
+            "Central African Republic": "Africa/Bangui",
+            "Chad": "Africa/N'djamena",
             "Chile": "America/Santiago",
             "China": "Asia/Shanghai",
             "Colombia": "America/Bogota",
+            "Comoros": "Indian/Comoro",
+            "Congo, Democratic Republic of the": "Africa/Kinshasa",
+            "Congo, Republic of the": "Africa/Brazzaville",
+            "Costa Rica": "America/Costa_Rica",
+            "Côte d'Ivoire": "Africa/Abidjan",
             "Croatia": "Europe/Zagreb",
             "Cuba": "America/Havana",
+            "Cyprus": "Asia/Nicosia",
+            "Czech Republic": "Europe/Prague",
             "Denmark": "Europe/Copenhagen",
+            "Djibouti": "Africa/Djibouti",
+            "Dominica": "America/Dominica",
             "Dominican Republic": "America/Santo_Domingo",
             "Ecuador": "America/Guayaquil",
             "Egypt": "Africa/Cairo",
+            "El Salvador": "America/El_Salvador",
+            "Equatorial Guinea": "Africa/Malabo",
             "Estonia": "Europe/Tallinn",
+            "Eswatini": "Africa/Mbabane",
+            "Ethiopia": "Africa/Addis_Ababa",
+            "Fiji": "Pacific/Fiji",
             "Finland": "Europe/Helsinki",
             "France": "Europe/Paris",
+            "Gabon": "Africa/Libreville",
+            "Gambia": "Africa/Banjul",
+            "Georgia": "Asia/Tbilisi",
             "Germany": "Europe/Berlin",
+            "Ghana": "Africa/Accra",
             "Greece": "Europe/Athens",
+            "Grenada": "America/Grenada",
             "Guatemala": "America/Guatemala",
+            "Guinea": "Africa/Conakry",
+            "Guinea-Bissau": "Africa/Bissau",
+            "Guyana": "America/Guyana",
+            "Haiti": "America/Port-au-Prince",
             "Honduras": "America/Tegucigalpa",
             "Hungary": "Europe/Budapest",
+            "Iceland": "Atlantic/Reykjavik",
             "India": "Asia/Kolkata",
-            "Indonesia": "Asia/Jakarta",
+            "Indonesia": {
+                "Bali": "Asia/Ubud",
+                "Jakarta": "Asia/Jakarta",
+                "Sumatra": "Asia/Jakarta"
+            },
+            "Iran": "Asia/Tehran",
+            "Iraq": "Asia/Baghdad",
             "Ireland": "Europe/Dublin",
             "Israel": "Asia/Jerusalem",
             "Italy": "Europe/Rome",
+            "Jamaica": "America/Jamaica",
             "Japan": "Asia/Tokyo",
+            "Jordan": "Asia/Amman",
+            "Kazakhstan": {
+                "Almaty": "Asia/Almaty",
+                "East": "Asia/Qyzylorda",
+                "West": "Asia/Aqtobe"
+            },
             "Kenya": "Africa/Nairobi",
+            "Kiribati": "Pacific/Kiribati",
+            "Kuwait": "Asia/Kuwait",
+            "Kyrgyzstan": "Asia/Bishkek",
+            "Laos": "Asia/Vientiane",
+            "Latvia": "Europe/Riga",
+            "Lebanon": "Asia/Beirut",
+            "Lesotho": "Africa/Maseru",
+            "Liberia": "Africa/Monrovia",
+            "Libya": "Africa/Tripoli",
+            "Liechtenstein": "Europe/Vaduz",
+            "Lithuania": "Europe/Vilnius",
+            "Luxembourg": "Europe/Luxembourg",
+            "Madagascar": "Indian/Antananarivo",
+            "Malawi": "Africa/Blantyre",
             "Malaysia": "Asia/Kuala_Lumpur",
-            "Mexico": "America/Mexico_City",
-            "Netherlands": "Europe/Amsterdam",
-            "New Zealand": "Pacific/Auckland",
+            "Maldives": "Asia/Male",
+            "Mali": "Africa/Bamako",
+            "Malta": "Europe/Valletta",
+            "Marshall Islands": "Pacific/Majuro",
+            "Mauritania": "Africa/Nouakchott",
+            "Mauritius": "Indian/Mauritius",
+            "Mexico": {
+                "Aguascalientes": "America/Aguascalientes",
+                "Baja California": "America/Tijuana",
+                "Campeche": "America/Campeche",
+                "Chiapas": "America/Chiapas",
+                "Chihuahua": "America/Chihuahua",
+                "Coahuila": "America/Monclova",
+                "Colima": "America/Colima",
+                "Durango": "America/Durango",
+                "Guanajuato": "America/Guadalajara",
+                "Guerrero": "America/Mexico_City",
+                "Hidalgo": "America/Mexico_City",
+                "Jalisco": "America/Guadalajara",
+                "Mexico City": "America/Mexico_City",
+                "Michoacán": "America/Mexico_City",
+                "Morelos": "America/Mexico_City",
+                "Nayarit": "America/Guadalajara",
+                "Nuevo León": "America/Monterrey",
+                "Oaxaca": "America/Oaxaca",
+                "Puebla": "America/Mexico_City",
+                "Querétaro": "America/Querétaro",
+                "Quintana Roo": "America/Cancun",
+                "San Luis Potosí": "America/Monterrey",
+                "Sinaloa": "America/Los_Angeles",
+                "Sonora": "America/Hermosillo",
+                "Tabasco": "America/Mexico_City",
+                "Tamaulipas": "America/Chicago",
+                "Tlaxcala": "America/Mexico_City",
+                "Veracruz": "America/Mexico_City",
+                "Yucatán": "America/Merida",
+                "Zacatecas": "America/Monterrey"
+            },
+            "Monaco": "Europe/Monaco",
+            "Mongolia": {
+                "Ulaanbaatar": "Asia/Ulaanbaatar",
+                "Hovd": "Asia/Hovd",
+                "Ömnögovi": "Asia/Choibalsan"
+            },
+            "Montenegro": "Europe/Podgorica",
+            "Morocco": "Africa/Casablanca",
+            "Mozambique": "Africa/Maputo",
+            "Namibia": "Africa/Windhoek",
+            "Nauru": "Pacific/Nauru",
+            "Nepal": "Asia/Kathmandu",
+            "New Zealand": {
+                "Auckland": "Pacific/Auckland",
+                "Wellington": "Pacific/Auckland",
+                "Chatham Islands": "Pacific/Chatham"
+            },
+            "Nicaragua": "America/Managua",
+            "Niger": "Africa/Niamey",
             "Nigeria": "Africa/Lagos",
+            "North Macedonia": "Europe/Skopje",
             "Norway": "Europe/Oslo",
+            "Oman": "Asia/Muscat",
             "Pakistan": "Asia/Karachi",
+            "Palau": "Pacific/Palau",
+            "Palestine": "Asia/Gaza",
+            "Panama": "America/Panama",
+            "Papua New Guinea": "Pacific/Port_Moresby",
+            "Paraguay": "America/Asuncion",
             "Peru": "America/Lima",
             "Philippines": "Asia/Manila",
             "Poland": "Europe/Warsaw",
             "Portugal": "Europe/Lisbon",
+            "Qatar": "Asia/Qatar",
             "Romania": "Europe/Bucharest",
-            "Russia": "Europe/Moscow",  // Note: Russia has multiple time zones
+            "Russia": {
+                "Kaliningrad": "Europe/Kaliningrad",
+                "Moscow": "Europe/Moscow",
+                "Samara": "Europe/Samara",
+                "Yekaterinburg": "Asia/Yekaterinburg",
+                "Omsk": "Asia/Omsk",
+                "Krasnoyarsk": "Asia/Krasnoyarsk",
+                "Irkutsk": "Asia/Irkutsk",
+                "Yakutsk": "Asia/Yakutsk",
+                "Vladivostok": "Asia/Vladivostok",
+                "Magadan": "Asia/Magadan",
+                "Kamchatka": "Asia/Kamchatka",
+                "Chukotka": "Asia/Anadyr"
+            },
+            "Rwanda": "Africa/Kigali",
+            "Saint Kitts and Nevis": "America/St_Kitts",
+            "Saint Lucia": "America/St_Lucia",
+            "Saint Vincent and the Grenadines": "America/St_Vincent",
+            "Samoa": "Pacific/Apia",
+            "San Marino": "Europe/San_Marino",
             "Saudi Arabia": "Asia/Riyadh",
+            "Senegal": "Africa/Dakar",
+            "Serbia": "Europe/Belgrade",
+            "Seychelles": "Indian/Mahe",
+            "Sierra Leone": "Africa/Freetown",
+            "Singapore": "Asia/Singapore",
+            "Slovakia": "Europe/Bratislava",
+            "Slovenia": "Europe/Ljubljana",
+            "Solomon Islands": "Pacific/Guadalcanal",
+            "Somalia": "Africa/Mogadishu",
             "South Africa": "Africa/Johannesburg",
             "South Korea": "Asia/Seoul",
+            "South Sudan": "Africa/Juba",
             "Spain": "Europe/Madrid",
+            "Sri Lanka": "Asia/Colombo",
+            "Sudan": "Africa/Khartoum",
+            "Suriname": "America/Paramaribo",
             "Sweden": "Europe/Stockholm",
             "Switzerland": "Europe/Zurich",
+            "Syria": "Asia/Damascus",
             "Taiwan": "Asia/Taipei",
+            "Tajikistan": "Asia/Dushanbe",
+            "Tanzania": "Africa/Dar_es_Salaam",
             "Thailand": "Asia/Bangkok",
+            "Timor-Leste": "Asia/Dili",
+            "Togo": "Africa/Lome",
+            "Tonga": "Pacific/Tongatapu",
+            "Trinidad and Tobago": "America/Port_of_Spain",
+            "Tunisia": "Africa/Tunis",
             "Turkey": "Europe/Istanbul",
+            "Turkmenistan": "Asia/Ashgabat",
+            "Tuvalu": "Pacific/Funafuti",
+            "Uganda": "Africa/Kampala",
             "Ukraine": "Europe/Kiev",
             "United Arab Emirates": "Asia/Dubai",
             "United Kingdom": "Europe/London",
-            "United States": "America/New_York",
+            "United States": {
+                "Alabama": "America/Chicago",
+                "Alaska": "America/Anchorage",
+                "Arizona": "America/Phoenix",
+                "Arkansas": "America/Chicago",
+                "California": "America/Los_Angeles",
+                "Colorado": "America/Denver",
+                "Connecticut": "America/New_York",
+                "Delaware": "America/New_York",
+                "Florida": "America/New_York",
+                "Georgia": "America/New_York",
+                "Hawaii": "Pacific/Honolulu",
+                "Idaho": "America/Boise",
+                "Illinois": "America/Chicago",
+                "Indiana": "America/Indiana/Indianapolis",
+                "Iowa": "America/Chicago",
+                "Kansas": "America/Chicago",
+                "Kentucky": "America/New_York",
+                "Louisiana": "America/Chicago",
+                "Maine": "America/New_York",
+                "Maryland": "America/New_York",
+                "Massachusetts": "America/New_York",
+                "Michigan": "America/Detroit",
+                "Minnesota": "America/Chicago",
+                "Mississippi": "America/Chicago",
+                "Missouri": "America/Chicago",
+                "Montana": "America/Denver",
+                "Nebraska": "America/Omaha",
+                "Nevada": "America/Los_Angeles",
+                "New Hampshire": "America/New_York",
+                "New Jersey": "America/New_York",
+                "New Mexico": "America/Denver",
+                "New York": "America/New_York",
+                "North Carolina": "America/New_York",
+                "North Dakota": "America/Chicago",
+                "Ohio": "America/New_York",
+                "Oklahoma": "America/Chicago",
+                "Oregon": "America/Los_Angeles",
+                "Pennsylvania": "America/New_York",
+                "Rhode Island": "America/New_York",
+                "South Carolina": "America/New_York",
+                "South Dakota": "America/Chicago",
+                "Tennessee": "America/Chicago",
+                "Texas": "America/Chicago",
+                "Utah": "America/Denver",
+                "Vermont": "America/New_York",
+                "Virginia": "America/New_York",
+                "Washington": "America/Los_Angeles",
+                "West Virginia": "America/New_York",
+                "Wisconsin": "America/Chicago",
+                "Wyoming": "America/Denver"
+            },
+            "Uruguay": "America/Montevideo",
+            "Uzbekistan": "Asia/Tashkent",
+            "Vanuatu": "Pacific/Efate",
+            "Vatican City": "Europe/Vatican",
+            "Venezuela": "America/Caracas",
             "Vietnam": "Asia/Hanoi",
+            "Yemen": "Asia/Aden",
+            "Zambia": "Africa/Lusaka",
+            "Zimbabwe": "Africa/Harare"
         };
 
         function getTime() {
             const countryInput = document.getElementById('countryInput').value.trim();
-            const timezone = countryTimezones[countryInput];
+            const timezone = getTimezone(countryInput);
 
             if (timezone) {
                 const options = {
@@ -205,9 +489,9 @@
                     hour: 'numeric',
                     minute: 'numeric',
                     second: 'numeric',
-                    hour12: true  // Change to 12-hour format
+                    hour12: true
                 };
-                
+
                 const date = new Date();
                 const currentTime = new Intl.DateTimeFormat([], options).format(date);
 
@@ -216,16 +500,75 @@
 
                 const timeCard = document.getElementById('timeCard');
                 timeCard.classList.add('show');
+
+                // Hide suggestions
+                document.getElementById('suggestionsList').style.display = 'none';
             } else {
-                alert('Country not found. Please try again.');
+                alert('Country or state not found. Please try again.');
             }
         }
 
-        // Optionally, set a timer to refresh the time every second
+        function getTimezone(query) {
+            for (const country in timezones) {
+                if (typeof timezones[country] === 'object') {
+                    for (const state in timezones[country]) {
+                        if (state.toLowerCase() === query.toLowerCase()) {
+                            return timezones[country][state];
+                        }
+                    }
+                } else if (country.toLowerCase() === query.toLowerCase()) {
+                    return timezones[country];
+                }
+            }
+            return null; // Not found
+        }
+
+        function showSuggestions(input) {
+            const suggestionsList = document.getElementById('suggestionsList');
+            suggestionsList.innerHTML = '';
+
+            if (input.length === 0) {
+                suggestionsList.style.display = 'none';
+                return;
+            }
+
+            const suggestions = [];
+
+            for (const country in timezones) {
+                if (country.toLowerCase().includes(input.toLowerCase())) {
+                    suggestions.push(country);
+                }
+
+                if (typeof timezones[country] === 'object') {
+                    for (const state in timezones[country]) {
+                        if (state.toLowerCase().includes(input.toLowerCase())) {
+                            suggestions.push(state);
+                        }
+                    }
+                }
+            }
+
+            if (suggestions.length > 0) {
+                suggestionsList.style.display = 'block';
+                suggestions.forEach(location => {
+                    const div = document.createElement('div');
+                    div.classList.add('suggestion-item');
+                    div.innerText = location;
+                    div.onclick = () => {
+                        document.getElementById('countryInput').value = location;
+                        suggestionsList.style.display = 'none';
+                    };
+                    suggestionsList.appendChild(div);
+                });
+            } else {
+                suggestionsList.style.display = 'none';
+            }
+        }
+
         setInterval(() => {
             if (document.getElementById('timeCard').classList.contains('show')) {
                 const countryInput = document.getElementById('countryName').innerText;
-                const timezone = countryTimezones[countryInput];
+                const timezone = getTimezone(countryInput);
                 if (timezone) {
                     const date = new Date();
                     const options = {
@@ -233,13 +576,13 @@
                         hour: 'numeric',
                         minute: 'numeric',
                         second: 'numeric',
-                        hour12: true  // Ensure it's 12-hour format
+                        hour12: true
                     };
                     const currentTime = new Intl.DateTimeFormat([], options).format(date);
                     document.getElementById('currentTime').innerText = currentTime;
                 }
             }
-        }, 1000); // Update time every second
+        }, 1000);
     </script>
 </body>
 </html>
