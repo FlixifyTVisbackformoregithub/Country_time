@@ -1,0 +1,245 @@
+<link rel="shortcut icon" type="image/png" href="https://i.ibb.co/hMPrKrf/Untitled-design-36.png">
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PVPN Time</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #121212;
+            color: #ffffff;
+            transition: background-color 0.5s ease-in-out, background-image 0.5s ease-in-out;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: fadeIn 0.5s forwards 0.3s; /* Delay animation */
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .search {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        input[type="text"] {
+            padding: 15px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 5px 0 0 5px;
+            outline: none;
+            flex: 1;
+            background-color: #1e1e1e;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            background-color: #272727;
+        }
+
+        button {
+            padding: 15px;
+            font-size: 1.2em;
+            color: #ffffff;
+            background-color: #ff5722;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background-color: #e64a19;
+        }
+
+        .time-card {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .time-card.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .current-time {
+            font-size: 4em;
+            margin: 10px 0;
+        }
+
+        .country {
+            font-size: 1.5em;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PVPN Time</h1>
+        <div class="search">
+            <input type="text" id="countryInput" placeholder="Enter country name (e.g., France)" />
+            <button onclick="getTime()">Search</button>
+        </div>
+
+        <div class="time-card" id="timeCard">
+            <div class="country" id="countryName"></div>
+            <div class="current-time" id="currentTime"></div>
+        </div>
+    </div>
+
+    <script>
+        const countryTimezones = {
+            "Afghanistan": "Asia/Kabul",
+            "Albania": "Europe/Tirane",
+            "Algeria": "Africa/Algiers",
+            "Andorra": "Europe/Andorra",
+            "Angola": "Africa/Luanda",
+            "Antigua and Barbuda": "America/Antigua",
+            "Argentina": "America/Argentina/Buenos_Aires",
+            "Australia": "Australia/Sydney",
+            "Bahamas": "America/Nassau",
+            "Bahrain": "Asia/Bahrain",
+            "Bangladesh": "Asia/Dhaka",
+            "Belgium": "Europe/Brussels",
+            "Brazil": "America/Sao_Paulo",
+            "Bulgaria": "Europe/Sofia",
+            "Canada": "America/Toronto",
+            "Chile": "America/Santiago",
+            "China": "Asia/Shanghai",
+            "Colombia": "America/Bogota",
+            "Croatia": "Europe/Zagreb",
+            "Cuba": "America/Havana",
+            "Denmark": "Europe/Copenhagen",
+            "Dominican Republic": "America/Santo_Domingo",
+            "Ecuador": "America/Guayaquil",
+            "Egypt": "Africa/Cairo",
+            "Estonia": "Europe/Tallinn",
+            "Finland": "Europe/Helsinki",
+            "France": "Europe/Paris",
+            "Germany": "Europe/Berlin",
+            "Greece": "Europe/Athens",
+            "Guatemala": "America/Guatemala",
+            "Honduras": "America/Tegucigalpa",
+            "Hungary": "Europe/Budapest",
+            "India": "Asia/Kolkata",
+            "Indonesia": "Asia/Jakarta",
+            "Ireland": "Europe/Dublin",
+            "Israel": "Asia/Jerusalem",
+            "Italy": "Europe/Rome",
+            "Japan": "Asia/Tokyo",
+            "Kenya": "Africa/Nairobi",
+            "Malaysia": "Asia/Kuala_Lumpur",
+            "Mexico": "America/Mexico_City",
+            "Netherlands": "Europe/Amsterdam",
+            "New Zealand": "Pacific/Auckland",
+            "Nigeria": "Africa/Lagos",
+            "Norway": "Europe/Oslo",
+            "Pakistan": "Asia/Karachi",
+            "Peru": "America/Lima",
+            "Philippines": "Asia/Manila",
+            "Poland": "Europe/Warsaw",
+            "Portugal": "Europe/Lisbon",
+            "Romania": "Europe/Bucharest",
+            "Russia": "Europe/Moscow",  // Note: Russia has multiple time zones
+            "Saudi Arabia": "Asia/Riyadh",
+            "South Africa": "Africa/Johannesburg",
+            "South Korea": "Asia/Seoul",
+            "Spain": "Europe/Madrid",
+            "Sweden": "Europe/Stockholm",
+            "Switzerland": "Europe/Zurich",
+            "Taiwan": "Asia/Taipei",
+            "Thailand": "Asia/Bangkok",
+            "Turkey": "Europe/Istanbul",
+            "Ukraine": "Europe/Kiev",
+            "United Arab Emirates": "Asia/Dubai",
+            "United Kingdom": "Europe/London",
+            "United States": "America/New_York",
+            "Vietnam": "Asia/Hanoi",
+        };
+
+        function getTime() {
+            const countryInput = document.getElementById('countryInput').value.trim();
+            const timezone = countryTimezones[countryInput];
+
+            if (timezone) {
+                const options = {
+                    timeZone: timezone,
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                    hour12: true  // Change to 12-hour format
+                };
+                
+                const date = new Date();
+                const currentTime = new Intl.DateTimeFormat([], options).format(date);
+
+                document.getElementById('countryName').innerText = countryInput;
+                document.getElementById('currentTime').innerText = currentTime;
+
+                const timeCard = document.getElementById('timeCard');
+                timeCard.classList.add('show');
+            } else {
+                alert('Country not found. Please try again.');
+            }
+        }
+
+        // Optionally, set a timer to refresh the time every second
+        setInterval(() => {
+            if (document.getElementById('timeCard').classList.contains('show')) {
+                const countryInput = document.getElementById('countryName').innerText;
+                const timezone = countryTimezones[countryInput];
+                if (timezone) {
+                    const date = new Date();
+                    const options = {
+                        timeZone: timezone,
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        second: 'numeric',
+                        hour12: true  // Ensure it's 12-hour format
+                    };
+                    const currentTime = new Intl.DateTimeFormat([], options).format(date);
+                    document.getElementById('currentTime').innerText = currentTime;
+                }
+            }
+        }, 1000); // Update time every second
+    </script>
+</body>
+</html>
